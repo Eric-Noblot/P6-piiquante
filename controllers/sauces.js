@@ -5,9 +5,10 @@ const fs = require("fs")
 // y compris aux fonctions permettant de supprimer les fichiers.
 
 exports.createThing = (req, res, next) => {
-  const thingObject = JSON.parse(req.body.thing); //l'objet qui nous est maintenant envoyé dans la requete est en JSNO chaine de caractere, on doit donc le parser
+  const thingObject = JSON.parse(req.body.sauce); //l'objet qui nous est maintenant envoyé dans la requete est en JSNO chaine de caractere, on doit donc le parser
   delete thingObject._id;
   delete thingObject._userId;
+
   const thing = new Thing({
       ...thingObject,
       userId: req.auth.userId, //grace au middleware on extrait le user id de notre requete
@@ -22,7 +23,7 @@ exports.createThing = (req, res, next) => {
 
   exports.modifyThing = (req, res, next) => {
     const thingObject = req.file ? {
-        ...JSON.parse(req.body.thing),
+        ...JSON.parse(req.body.sauce),
         imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
     } : { ...req.body };
   
@@ -52,7 +53,7 @@ exports.createThing = (req, res, next) => {
                 fs.unlink(`images/${filename}`, () => {
                     Thing.deleteOne({_id: req.params.id})
                         .then(() => { res.status(200).json({message: 'Objet supprimé !'})})
-                        .catch(error => res.status(401).json({ error }));
+                        .catch(error => res.status(401).json({ error: error }));
                 });
             }
         })
