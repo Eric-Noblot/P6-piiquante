@@ -31,28 +31,15 @@ app.use((req, res, next) => {
 
 app.use(express.json()); 
 
-app.get('/api/sauces/like', (req, res) => {
-  res.send('Hello LIKE !')
-  console.log("ca marchce")
-})
+// app.get('/api/sauces/like', (req, res) => {
+//   res.send('Hello LIKE !')
+//   console.log("ca marchce")
+// })
 
 
 app.use("/api/sauces", saucesRoutes)
 app.use("/api/auth", userRoutes);
 app.use("/images", express.static(path.join(__dirname,"images")));
-
-
-// app.get("api/sauces/like", async (req, res, next) => {
-//     try{
-//     const users = await User.find({})
-//     res.send(users)
-//     } catch (error){
-//         res.status(500).send(error)
-//     }
-// })
-
-
-
 
 
 module.exports = app;
