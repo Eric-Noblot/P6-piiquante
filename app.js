@@ -29,13 +29,7 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.json()); 
-
-// app.get('/api/sauces/like', (req, res) => {
-//   res.send('Hello LIKE !')
-//   console.log("ca marchce")
-// })
-
+app.use(express.json());    
 
 app.use("/api/sauces", saucesRoutes)
 app.use("/api/auth", userRoutes);

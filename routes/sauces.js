@@ -4,7 +4,6 @@ const auth = require("../middleware/auth")
 const router = express.Router()
 const multer = require("../middleware/multer-config")
 const saucesController = require ("../controllers/sauces")
-const likeController = require ("../controllers/like")
 
 router.get('/', auth, saucesController.getAllSauces );
 router.post('/', auth, multer, saucesController.createSauce);

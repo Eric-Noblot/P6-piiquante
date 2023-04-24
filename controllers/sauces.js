@@ -20,12 +20,6 @@ exports.createSauce = (req, res, next) => {
   .catch(error => { res.status(400).json( { error })})
 };
 
-//  function saveSauce (sauce) {
-//     sauce.save()
-//     .then(() => { res.status(201).json({message: 'Objet enregistré !'})})
-//     .catch(error => { res.status(400).json( { error })})
-// }
-
 exports.modifySauce = (req, res, next) => {
     const sauceObject = req.file ? {
         ...JSON.parse(req.body.sauce),
@@ -38,9 +32,12 @@ Sauce.findOne({_id: req.params.id})
         if (sauce.userId != req.auth.userId) {
             res.status(401).json({ message : 'Not authorized'});
         } else {
-            Sauce.updateOne({ _id: req.params.id}, { ...sauceObject, _id: req.params.id})
-            .then(() => res.status(200).json({message : 'Objet modifié!'}))
-            .catch(error => res.status(401).json({ error }));
+            const filename = sauce.imageUrl.split('/images/')[1];
+            fs.unlink(`images/${filename}`, () => {
+                Sauce.updateOne({ _id: req.params.id}, { ...sauceObject, _id: req.params.id})
+                .then(() => res.status(200).json({message : 'Objet modifié!'}))
+                .catch(error => res.status(401).json({ error }));
+            })
         }
     })
     .catch((error) => {
@@ -81,61 +78,62 @@ Sauce.find()
 
 function incrementeLike(sauce, userId){
 const isUserInArray = sauce.usersLiked.includes(userId)
-    if (isUserInArray) { return }
+    if (isUserInArray) { return false }
     sauce.likes ++
     sauce.usersLiked.push(userId)
+    return true
 }
 
 function decrementeLike(sauce, userId){
-const isUserInArray = sauce.usersDisliked.includes(userId)
-    if (isUserInArray) { return }
+    const isUserInArray = sauce.usersDisliked.includes(userId)
+    if (isUserInArray) { return false }
     sauce.dislikes ++
     sauce.usersDisliked.push(userId)
+    return true
 }
 
 function searchLike(sauce, userId){
-
     if (sauce.usersLiked.includes(userId) && (!sauce.usersDisliked.includes(userId))){ 
         sauce.likes --
-        // console.log("usersLiked avant", sauce.usersLiked)
-        // let newArrayUserLiked = sauce.usersLiked.filter (element => {
-        //     element !== userId
-        // })
-        //return newArrayUserLiked
+        sauce.usersLiked = sauce.usersLiked.filter (element => {
+            return element !== userId
+        })
     }
-    if (!sauce.usersLiked.includes(userId) && (sauce.usersDisliked.includes(userId))){ 
+    else if(!sauce.usersLiked.includes(userId) && (sauce.usersDisliked.includes(userId))){ 
         sauce.dislikes --
-        console.log("usersdisliked avant", sauce.usersDisliked)
-        console.log("sauce dans le dislike", sauce)
-        // let newUsersDisliked = sauce.usersLiked.filter (element => {
-        //     element !== userId
-        // })
-    } 
+        sauce.usersDisliked = sauce.usersDisliked.filter (element => { 
+            return element !== userId
+        })
+    }   
 }
-
 
 exports.createLike = (req, res, next) => {
     Sauce.findOne({_id: req.params.id})
     .then((sauce) => {
-        console.log("sauce:", sauce)
+
         const userId = req.auth.userId
         const userLike = req.body.like 
 
         switch (userLike) {
+
             case 1:
-                incrementeLike(sauce, userId)
-                sauce.save()
-                .then(() => { res.status(201).json({message: 'Like positif enregistré !'})})
-                .catch(error => { res.status(400).json( { error })})
+                if (incrementeLike(sauce, userId)){
+                    sauce.save()
+                    .then(() => { res.status(201).json({message: 'Like positif enregistré !'})})
+                    .catch(error => { res.status(400).json( { error })})
+                    } else{
+                        res.status(400).json( { error: "Opération non permise" })}
                 break;
 
             case -1:
-                decrementeLike(sauce, userId)
-                sauce.save()
-                .then(() => { res.status(201).json({message: 'Like négatif enregistré !'})})
-                .catch(error => { res.status(400).json( { error })})
-                break;
-
+                if (decrementeLike(sauce, userId)){
+                    sauce.save()
+                    .then(() => { res.status(201).json({message: 'Like négatif enregistré !'})})
+                    .catch(error => { res.status(400).json( { error })})
+                    } else{
+                        res.status(400).json( { error: "Opération non permise" })}
+                    break;
+    
             case 0:
                 searchLike(sauce, userId)
                 sauce.save()
@@ -144,36 +142,12 @@ exports.createLike = (req, res, next) => {
                 break;
 
             default:
-                console.log('Le contenu de "likes" ne correspond pas au résultat attendu')
-                return    // est ce que c'est bien return?
-            }
-            console.log("En dehors du switch!")
-        // }
-        })
+                res.status(400).json( { error: "mauvaise réponse du like" })
+        }
+    })
     .catch(error => res.status(400).json({message : error}))
 }
 
 
-
-    // const sauceObject = req.file ? {
-    // ...JSON.parse(req.body.sauce),
-    // imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
-    // } : { ...req.body };
-
-    // Sauce.findOne({_id: req.params.id})
-    // .then((sauce) => {
-    //     console.log("sauce" , sauce)
-    //     let sauceLike = sauce.likes += req.body.like
-    //     sauce.likes = sauceLike
-
-    //     console.log("sauce.like" , sauce.likes)
-    //     if (sauce.userId != req.auth.userId) {
-    //         res.status(401).json({ message : 'Not authorized'});
-    //     } else {
-    //         Sauce.updateOne({ _id: req.params.id}, { ...sauceObject, _id: req.params.id})
-    //         .then(() => res.status(200).json({message : 'Objet modifié!'}), console.log("sauceUpdate", sauce))
-    //         .catch(error => res.status(401).json({ error }));
-            
-    //     }
-    // })
- //};
+//- fs unlink
+ // vérifier que l'image est bien supprimée lorsqu'on modifie l'image
