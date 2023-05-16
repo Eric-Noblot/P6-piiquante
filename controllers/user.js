@@ -30,9 +30,9 @@ exports.login = (req, res, next) => {
                     }else {
                         res.status(200).json({
                             userId: user._id,
-                            token: jwt.sign(            //La méthode sign() du package jsonwebtoken utilise une clé secrète pour chiffrer un token qui peut contenir un payload personnalisé et avoir une validité limitée.
-                                { userId: user._id },
-                                'RANDOM_TOKEN_SECRET',
+                            token: jwt.sign( 
+                                { userId: user._id }, 
+                                'RANDOM_TOKEN_SECRET', 
                                 { expiresIn: '24h' }
                             )
                         })
@@ -43,5 +43,5 @@ exports.login = (req, res, next) => {
         })
         .catch(error => {
             res.status(500).json({error: error})
-        }) //ici l'erreur se fait au niveau de la base de données ou des requetes, ce ne renvoie pas d'errur sur il ne trouve pas un user
+        }) 
 };
